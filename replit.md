@@ -1,6 +1,15 @@
 # Overview
 
-Rigel is a comprehensive learning management system (LMS) built as a full-stack web application. The platform enables course creation, management, and delivery with distinct user roles for administrators and students. It features course enrollment, progress tracking, file uploads for educational materials, and comprehensive analytics dashboards. The system is designed to provide a seamless educational experience with modern web technologies and a responsive user interface.
+Rigel is a comprehensive learning management system (LMS) built as a full-stack web application with custom authentication. The platform enables course creation, management, and delivery with distinct user roles for administrators and students. Administrators can create user accounts, upload courses with materials, and manage the learning platform. Students can access enrolled courses and track their progress. The system features the Rigel brand identity with orange and blue color scheme and is designed to provide a seamless educational experience.
+
+# Recent Changes (January 2025)
+
+- **Custom Authentication System**: Replaced Replit Auth with custom username/password authentication
+- **Admin Account**: Created initial admin user (username: admin, password: admin123) 
+- **User Management**: Admins can create and manage student accounts with custom credentials
+- **Course Upload**: Integrated file upload system for educational materials (PDF, DOC, PPT, MP4, MP3)
+- **Rigel Branding**: Applied orange (#ff6b35) and blue (#4a90e2) color scheme throughout interface
+- **Session Management**: PostgreSQL session storage for authentication persistence
 
 # User Preferences
 
