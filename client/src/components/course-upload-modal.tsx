@@ -44,7 +44,7 @@ export default function CourseUploadModal({ isOpen, onClose }: CourseUploadModal
       formData.append("duration", data.duration.toString());
       
       if (data.file) {
-        formData.append("file", data.file);
+        formData.append("materials", data.file);
       }
 
       const res = await fetch("/api/courses", {

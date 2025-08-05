@@ -3,7 +3,9 @@ import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isAdmin } from "./auth";
-import { insertCourseSchema, insertCourseMaterialSchema, insertEnrollmentSchema } from "@shared/schema";
+import { insertCourseSchema, insertCourseMaterialSchema, insertEnrollmentSchema, users } from "@shared/schema";
+import { db } from "./db";
+import { desc } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
 import { z } from "zod";
@@ -191,6 +193,17 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error fetching student stats:", error);
       res.status(500).json({ message: "Failed to fetch statistics" });
+    }
+  });
+
+  // Users routes (admin only)
+  app.get('/api/users', isAdmin, async (req: any, res) => {
+    try {
+      const allUsers = await db.select().from(users).orderBy(desc(users.createdAt));
+      res.json(allUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
     }
   });
 

@@ -176,7 +176,7 @@ export class DatabaseStorage implements IStorage {
     studyHours: number;
   }> {
     const userEnrollments = await this.getEnrollments(userId);
-    const completedCourses = userEnrollments.filter(e => e.progress >= 100).length;
+    const completedCourses = userEnrollments.filter(e => (e.progress || 0) >= 100).length;
     
     return {
       enrolledCourses: userEnrollments.length,
