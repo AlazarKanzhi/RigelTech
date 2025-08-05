@@ -9,9 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import CourseUploadModal from "@/components/course-upload-modal";
+import UserManagementModal from "@/components/user-management-modal";
 
 export default function AdminDashboard() {
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showUserModal, setShowUserModal] = useState(false);
   const [activeTab, setActiveTab] = useState('courses');
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -42,6 +44,11 @@ export default function AdminDashboard() {
     enabled: isAuthenticated && user?.isAdmin,
   });
 
+  const { data: users, isLoading: usersLoading } = useQuery({
+    queryKey: ["/api/users"],
+    enabled: isAuthenticated && user?.isAdmin,
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (courseId: string) => {
       await apiRequest("DELETE", `/api/courses/${courseId}`);
@@ -61,7 +68,7 @@ export default function AdminDashboard() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth";
         }, 500);
         return;
       }
@@ -73,8 +80,22 @@ export default function AdminDashboard() {
     },
   });
 
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/logout");
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(["/api/user"], null);
+      window.location.href = "/auth";
+    },
+    onError: () => {
+      // Still redirect even if logout fails
+      window.location.href = "/auth";
+    },
+  });
+
   const handleLogout = () => {
-    window.location.href = "/api/logout";
+    logoutMutation.mutate();
   };
 
   const handleDeleteCourse = (courseId: string) => {
@@ -166,13 +187,13 @@ export default function AdminDashboard() {
             </button>
             <button 
               className={`py-4 px-1 text-sm font-medium border-b-2 ${
-                activeTab === 'students' 
+                activeTab === 'users' 
                   ? 'border-rigel-orange text-rigel-orange' 
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
-              onClick={() => setActiveTab('students')}
+              onClick={() => setActiveTab('users')}
             >
-              Students
+              Users
             </button>
             <button 
               className={`py-4 px-1 text-sm font-medium border-b-2 ${
@@ -336,16 +357,83 @@ export default function AdminDashboard() {
           </Card>
         )}
 
-        {/* Students Tab */}
-        {activeTab === 'students' && (
+        {/* Users Tab */}
+        {activeTab === 'users' && (
           <Card>
             <CardContent className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Student Management</h2>
-              <div className="text-center py-12">
-                <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">Student management coming soon.</p>
-                <p className="text-sm text-gray-500 mt-2">View and manage student enrollments and progress.</p>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-gray-900">User Management</h2>
+                <Button 
+                  onClick={() => setShowUserModal(true)}
+                  className="bg-rigel-blue hover:bg-blue-600 text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add New User
+                </Button>
               </div>
+              
+              {!users || (users as any[]).length === 0 ? (
+                <div className="text-center py-12">
+                  <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">No users created yet.</p>
+                  <p className="text-sm text-gray-500 mt-2">Create your first student account to get started.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Name</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Username</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Email</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Role</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Status</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(users as any[]).map((userData: any) => (
+                        <tr key={userData.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-3 px-4">
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {userData.firstName && userData.lastName 
+                                  ? `${userData.firstName} ${userData.lastName}` 
+                                  : userData.username}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {new Date(userData.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-gray-600">{userData.username}</td>
+                          <td className="py-3 px-4 text-gray-600">{userData.email || 'N/A'}</td>
+                          <td className="py-3 px-4">
+                            <Badge className={userData.isAdmin ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}>
+                              {userData.isAdmin ? 'Admin' : 'Student'}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4">
+                            <Badge className={userData.isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'}>
+                              {userData.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex space-x-2">
+                              <Button variant="ghost" size="sm" className="text-rigel-blue hover:text-blue-700">
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
@@ -369,6 +457,12 @@ export default function AdminDashboard() {
       <CourseUploadModal 
         isOpen={showUploadModal} 
         onClose={() => setShowUploadModal(false)} 
+      />
+      
+      {/* User Management Modal */}
+      <UserManagementModal
+        isOpen={showUserModal}
+        onClose={() => setShowUserModal(false)}
       />
     </div>
   );
